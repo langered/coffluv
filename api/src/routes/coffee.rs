@@ -1,11 +1,8 @@
-use rocket::Route;
-use rocket::{
-    self,
-    serde::{json::Json, Deserialize, Serialize},
-};
+use axum::{http::StatusCode, response::IntoResponse, Json};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-struct Coffee {
+pub struct Coffee {
     brand: String,
     name: String,
     grind_size: u8,
@@ -13,8 +10,7 @@ struct Coffee {
     rating: Option<u8>,
 }
 
-#[rocket::get("/coffees")]
-fn coffee() -> Json<Vec<Coffee>> {
+pub async fn get_coffees() -> impl IntoResponse {
     let coffees = vec![
         Coffee {
             brand: "Agata".to_string(),
@@ -46,14 +42,9 @@ fn coffee() -> Json<Vec<Coffee>> {
         },
     ];
 
-    Json(coffees)
+    (StatusCode::OK, Json(coffees))
 }
 
-#[post("/coffee", format = "json", data = "<user_input>")]
-fn create_coffee(user_input: Json<Coffee>) -> Json<Coffee> {
-    user_input
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![coffee, create_coffee]
+pub async fn create_coffee(user_input: Json<Coffee>) -> impl IntoResponse {
+    (StatusCode::CREATED, user_input)
 }
