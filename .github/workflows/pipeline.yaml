@@ -1,5 +1,8 @@
 name: CI/CD
 on: [push]
+env:
+  DOCKER_REGISTRY: ghcr.io
+
 jobs:
   style_check_api:
     runs-on: ubuntu-latest
@@ -8,3 +11,31 @@ jobs:
       - name: Run Clippy
         working-directory: api
         run: cargo clippy --all-targets --all-features
+
+  upload_docker:
+    needs: [style_check_api]
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    - uses: actions/checkout@v4
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: ./api
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

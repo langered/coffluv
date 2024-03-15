@@ -16,7 +16,7 @@ async fn main() {
         .route("/coffee", post(coffee::create_coffee));
 
     // run our app with hyper
-    const HOST: &str = "127.0.0.1:8080";
+    const HOST: &str = "0.0.0.0:8000";
     println!("Starting server on http://{}", HOST);
     let listener = tokio::net::TcpListener::bind(HOST).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
